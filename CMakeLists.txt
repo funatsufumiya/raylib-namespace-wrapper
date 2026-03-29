@@ -107,7 +107,8 @@ include(GenerateExportHeader)
 set(sources
     include/RaylibWrapper/export.h
     include/RaylibWrapper/RaylibWrapper.hpp
-    src/RaylibWrapper.cpp)
+    src/RaylibWrapper.cpp
+    src/c_api.cpp)
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}" FILES ${sources})
 
 if(raylibwrapper_BUILD_SHARED_AND_STATIC)
