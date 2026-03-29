@@ -92,6 +92,39 @@ if(NOT TARGET raylib)
 endif()
 
 if(raylibwrapper_BUILD_SHARED_AND_STATIC)
+    # Ensure a usable `glfw` target exists.
+    # On MSVC + vcpkg static triplet the import lib may be named `glfw3.lib`.
+    # Use a small MSVC-only workaround: if no `glfw` target exists, try to
+    # locate common import-library names and create an IMPORTED target
+    # pointing to that file. On non-MSVC platforms, prefer the normal
+    # `find_package` behavior so CMake-imported targets are used.
+    if(NOT TARGET glfw)
+        if(MSVC)
+            find_library(GLFW_LIB_FOUND
+                NAMES glfw3 glfw3.lib glfw3dll glfw glfw.lib
+                PATHS
+                    ${CMAKE_BINARY_DIR}
+                    ${CMAKE_SOURCE_DIR}
+                    ${CMAKE_CURRENT_SOURCE_DIR}
+                PATH_SUFFIXES lib lib64 "lib/${CMAKE_BUILD_TYPE}" NO_DEFAULT_PATH)
+            if(GLFW_LIB_FOUND)
+                add_library(glfw UNKNOWN IMPORTED)
+                set_target_properties(glfw PROPERTIES IMPORTED_LOCATION "${GLFW_LIB_FOUND}")
+                # try to locate headers so include dirs are available
+                find_path(GLFW_INCLUDE_DIR NAMES GLFW/glfw3.h HINTS ${CMAKE_SOURCE_DIR} PATHS ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_BINARY_DIR} PATH_SUFFIXES include)
+                if(GLFW_INCLUDE_DIR)
+                    set_target_properties(glfw PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${GLFW_INCLUDE_DIR}")
+                endif()
+            else()
+                # fall back to package config if the import lib wasn't found
+                find_package(glfw3 CONFIG REQUIRED)
+            endif()
+        else()
+            # non-MSVC: rely on package-provided imported targets
+            find_package(glfw3 CONFIG REQUIRED)
+        endif()
+    endif()
+
     target_link_libraries(raylibwrapper_shared PRIVATE raylib glfw)
     target_link_libraries(raylibwrapper_static PRIVATE raylib glfw)
 else()

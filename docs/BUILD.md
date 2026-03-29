@@ -11,6 +11,7 @@ git clone https://github.com/microsoft/vcpkg.git vcpkg
 
 ```powershell
 .\vcpkg\vcpkg.exe install raylib:x64-windows
+.\vcpkg\vcpkg.exe install glfw3:x64-windows-static
 ```
 
 3) Configure & build (uses `./vcpkg/scripts/buildsystems/vcpkg.cmake`):
