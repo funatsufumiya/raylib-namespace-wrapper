@@ -72,6 +72,13 @@ def main():
     txt = hdr_in.read_text(encoding='utf-8')
     ns = extract_rlw_namespace(txt)
     funcs = find_functions(ns)
+    # Disambiguate overloaded function names: if multiple functions share the
+    # same name, append a numeric suffix (_1, _2, ...) to the C wrapper name.
+    from collections import defaultdict
+    name_counts = defaultdict(int)
+    for _ret, name, _params in funcs:
+        name_counts[name] += 1
+    name_index = defaultdict(int)
     # emit header
     hdr_lines = []
     hdr_lines.append('#pragma once')
@@ -82,7 +89,12 @@ def main():
     hdr_lines.append('#endif')
     hdr_lines.append('')
     for ret, name, params in funcs:
-        hdr_lines.append(make_c_decl(ret, name, params))
+        if name_counts[name] == 1:
+            c_name = name
+        else:
+            name_index[name] += 1
+            c_name = f"{name}_{name_index[name]}"
+        hdr_lines.append(f'RAYLIBWRAPPER_API {ret} rlw_{c_name}({params});')
     hdr_lines.append('')
     hdr_lines.append('#ifdef __cplusplus')
     hdr_lines.append('} // extern "C"')
@@ -94,8 +106,24 @@ def main():
     cpp_lines.append('#include <RaylibWrapper/c_api_generated.h>')
     cpp_lines.append('#include <RaylibWrapper/RaylibWrapper.hpp>')
     cpp_lines.append('extern "C" {')
+    # Emit implementations using the original rlw::name calls but unique
+    # rlw_<c_name> wrapper names.
+    name_index.clear()
     for ret, name, params in funcs:
-        cpp_lines.append(make_c_impl(ret, name, params))
+        if name_counts[name] == 1:
+            c_name = name
+        else:
+            name_index[name] += 1
+            c_name = f"{name}_{name_index[name]}"
+        # create impl that calls rlw::original_name
+        pnames = param_names(params)
+        call_args = ', '.join(pnames)
+        decl = f'{ret} rlw_{c_name}({params})'
+        if ret.strip() == 'void':
+            body = f'    rlw::{name}({call_args});\n'
+        else:
+            body = f'    return rlw::{name}({call_args});\n'
+        cpp_lines.append(decl + ' {\n' + body + '}')
     cpp_lines.append('} // extern "C"')
     out_cpp.write_text('\n\n'.join(cpp_lines), encoding='utf-8')
 
