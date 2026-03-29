@@ -100,9 +100,16 @@ if(raylibwrapper_BUILD_SHARED_AND_STATIC)
     # `find_package` behavior so CMake-imported targets are used.
     if(NOT TARGET glfw)
         if(MSVC)
+            # prefer vcpkg installed path when available
+            if(DEFINED VCPKG_TARGET_TRIPLET)
+                set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/${VCPKG_TARGET_TRIPLET}/lib")
+            else()
+                set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-windows/lib")
+            endif()
             find_library(GLFW_LIB_FOUND
                 NAMES glfw3 glfw3.lib glfw3dll glfw glfw.lib
                 PATHS
+                    ${_vcpkg_lib_dir}
                     ${CMAKE_BINARY_DIR}
                     ${CMAKE_SOURCE_DIR}
                     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -120,13 +127,75 @@ if(raylibwrapper_BUILD_SHARED_AND_STATIC)
                 find_package(glfw3 CONFIG REQUIRED)
             endif()
         else()
-            # non-MSVC: rely on package-provided imported targets
-            find_package(glfw3 CONFIG REQUIRED)
+            # non-MSVC on Windows (MSYS2/MinGW) — try to locate MinGW-style
+            # static/archived libs (libglfw3.a) and create an IMPORTED target.
+            if(WIN32 AND NOT MSVC)
+                if(DEFINED VCPKG_TARGET_TRIPLET)
+                    set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/${VCPKG_TARGET_TRIPLET}/lib")
+                else()
+                    set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-mingw-static/lib")
+                endif()
+                find_library(GLFW_LIB_FOUND
+                    NAMES libglfw3 libglfw3.a glfw3 libglfw libglfw.a glfw
+                    PATHS
+                        ${_vcpkg_lib_dir}
+                        ${CMAKE_BINARY_DIR}
+                        ${CMAKE_SOURCE_DIR}
+                        ${CMAKE_CURRENT_SOURCE_DIR}
+                    PATH_SUFFIXES lib lib64 "lib/${CMAKE_BUILD_TYPE}" )
+                if(GLFW_LIB_FOUND)
+                    add_library(glfw STATIC IMPORTED)
+                    set_target_properties(glfw PROPERTIES IMPORTED_LOCATION "${GLFW_LIB_FOUND}")
+                    find_path(GLFW_INCLUDE_DIR NAMES GLFW/glfw3.h HINTS ${CMAKE_SOURCE_DIR} PATHS ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_BINARY_DIR} PATH_SUFFIXES include)
+                    if(GLFW_INCLUDE_DIR)
+                        set_target_properties(glfw PROPERTIES INTERFACE_INCLUDE_DIRECTORIES "${GLFW_INCLUDE_DIR}")
+                    endif()
+                else()
+                    # fall back to package-provided imported targets
+                    find_package(glfw3 CONFIG REQUIRED)
+                endif()
+            else()
+                # other platforms: use package-provided imported targets
+                find_package(glfw3 CONFIG REQUIRED)
+            endif()
         endif()
     endif()
 
-    target_link_libraries(raylibwrapper_shared PRIVATE raylib glfw)
-    target_link_libraries(raylibwrapper_static PRIVATE raylib glfw)
+    # For MSYS2/MinGW builds, ensure the vcpkg lib directory is on the linker's search path
+    if(WIN32 AND NOT MSVC)
+        if(DEFINED VCPKG_TARGET_TRIPLET)
+            set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/${VCPKG_TARGET_TRIPLET}/lib")
+        else()
+            set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-mingw-static/lib")
+        endif()
+        if(EXISTS "${_vcpkg_lib_dir}")
+            link_directories("${_vcpkg_lib_dir}")
+        endif()
+    endif()
+
+    # On MinGW/MSYS2, prefer linking the actual lib file (libglfw3.a) if present
+    if(WIN32 AND NOT MSVC)
+        if(DEFINED VCPKG_TARGET_TRIPLET)
+            set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/${VCPKG_TARGET_TRIPLET}/lib")
+        else()
+            set(_vcpkg_lib_dir "${CMAKE_SOURCE_DIR}/vcpkg/installed/x64-mingw-static/lib")
+        endif()
+        find_library(GLFW_LIB_PATH
+            NAMES libglfw3 libglfw3.a glfw3 libglfw libglfw.a glfw
+            PATHS ${_vcpkg_lib_dir} ${CMAKE_BINARY_DIR} ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}
+            PATH_SUFFIXES lib)
+
+        if(GLFW_LIB_PATH)
+            target_link_libraries(raylibwrapper_shared PRIVATE raylib "${GLFW_LIB_PATH}")
+            target_link_libraries(raylibwrapper_static PRIVATE raylib "${GLFW_LIB_PATH}")
+        else()
+            target_link_libraries(raylibwrapper_shared PRIVATE raylib glfw)
+            target_link_libraries(raylibwrapper_static PRIVATE raylib glfw)
+        endif()
+    else()
+        target_link_libraries(raylibwrapper_shared PRIVATE raylib glfw)
+        target_link_libraries(raylibwrapper_static PRIVATE raylib glfw)
+    endif()
 else()
     target_link_libraries(raylibwrapper PRIVATE raylib glfw)
 endif()
