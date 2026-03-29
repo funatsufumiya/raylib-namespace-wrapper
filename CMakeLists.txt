@@ -92,10 +92,10 @@ if(NOT TARGET raylib)
 endif()
 
 if(raylibwrapper_BUILD_SHARED_AND_STATIC)
-    target_link_libraries(raylibwrapper_shared PRIVATE raylib)
-    target_link_libraries(raylibwrapper_static PRIVATE raylib)
+    target_link_libraries(raylibwrapper_shared PRIVATE raylib glfw)
+    target_link_libraries(raylibwrapper_static PRIVATE raylib glfw)
 else()
-    target_link_libraries(raylibwrapper PRIVATE raylib)
+    target_link_libraries(raylibwrapper PRIVATE raylib glfw)
 endif()
 
 # On MSVC, ensure shared DLLs export all symbols so dynamic linking (JIT/FFI)
