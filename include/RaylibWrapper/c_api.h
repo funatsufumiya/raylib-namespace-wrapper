@@ -1,4 +1,5 @@
 #pragma once
+
 #include <RaylibWrapper/export.h>
 #include <RaylibWrapper/RaylibWrapper.hpp>
 

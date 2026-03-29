@@ -98,6 +98,20 @@ else()
     target_link_libraries(raylibwrapper PRIVATE raylib)
 endif()
 
+# On MSVC, ensure shared DLLs export all symbols so dynamic linking (JIT/FFI)
+# can find the `rlw_*` functions even if export macros aren't applied everywhere.
+if(MSVC)
+    if(TARGET raylibwrapper_shared)
+        set_target_properties(raylibwrapper_shared PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        target_link_libraries(raylibwrapper_shared PUBLIC legacy_stdio_definitions)
+    endif()
+    # Also handle single-target (non-shared_and_static) layout where target is `raylibwrapper`.
+    if(TARGET raylibwrapper)
+        set_target_properties(raylibwrapper PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        target_link_libraries(raylibwrapper PUBLIC legacy_stdio_definitions)
+    endif()
+endif()
+
 #----------------------------------------------------------------------------------------------------------------------
 # raylibwrapper sources
 #----------------------------------------------------------------------------------------------------------------------

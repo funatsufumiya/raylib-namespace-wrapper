@@ -1,3 +1,4 @@
+#define RAYLIBWRAPPER_STATIC_DEFINE
 #include <RaylibWrapper/c_api.h>
 
 #include <RaylibWrapper/RaylibWrapper.hpp>
