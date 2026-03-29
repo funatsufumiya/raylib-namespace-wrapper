@@ -1004,7 +1004,7 @@ namespace rlw
     // NOTE: Shader functionality is not available on OpenGL 1.1
     Shader LoadShader(const char *vsFileName, const char *fsFileName);                                // Load shader from files and bind default locations
     Shader LoadShaderFromMemory(const char *vsCode, const char *fsCode);                              // Load shader from code strings and bind default locations
-    bool IsShaderReady(Shader shader);                                                                // Check if a shader is ready
+    bool IsShaderValid(Shader shader);                                                                // Check if a shader is valid (v5.5)
     int GetShaderLocation(Shader shader, const char *uniformName);                                    // Get shader uniform location
     int GetShaderLocationAttrib(Shader shader, const char *attribName);                               // Get shader attribute location
     void SetShaderValue(Shader shader, int locIndex, const void *value, int uniformType);             // Set shader uniform value
@@ -1014,7 +1014,7 @@ namespace rlw
     void UnloadShader(Shader shader);                                                                 // Unload shader from GPU memory (VRAM)
 
     // Screen-space-related functions
-    Ray GetMouseRay(Vector2 mousePosition, Camera camera);                              // Get a ray trace from mouse position
+    Ray GetScreenToWorldRay(Vector2 mousePosition, Camera camera);                              // Get a ray trace from screen position (v5.5)
     Matrix GetCameraMatrix(Camera camera);                                              // Get camera transform matrix (view matrix)
     Matrix GetCameraMatrix2D(Camera2D camera);                                          // Get camera 2d transform matrix
     Vector2 GetWorldToScreen(Vector3 position, Camera camera);                          // Get the screen space position for a 3d world space position
@@ -1103,7 +1103,7 @@ namespace rlw
 
     // Automation events functionality
     AutomationEventList LoadAutomationEventList(const char *fileName);              // Load automation events list from file, NULL for empty list, capacity = MAX_AUTOMATION_EVENTS
-    void UnloadAutomationEventList(AutomationEventList *list);                      // Unload automation events list from file
+    void UnloadAutomationEventList(AutomationEventList list);                      // Unload automation events list from file
     bool ExportAutomationEventList(AutomationEventList list, const char *fileName); // Export automation events list as text file
     void SetAutomationEventList(AutomationEventList *list);                         // Set automation event list to record to
     void SetAutomationEventBaseFrame(int frame);                                    // Set automation event internal base frame to start recording
@@ -1211,7 +1211,7 @@ namespace rlw
     void DrawRectangleLines(int posX, int posY, int width, int height, Color color);                                                       // Draw rectangle outline
     void DrawRectangleLinesEx(Rectangle rec, float lineThick, Color color);                                                                // Draw rectangle outline with extended parameters
     void DrawRectangleRounded(Rectangle rec, float roundness, int segments, Color color);                                                  // Draw rectangle with rounded edges
-    void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color);                            // Draw rectangle with rounded edges outline
+    void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color);                            // Draw rectangle with rounded edges outline
     void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                                                    // Draw a color-filled triangle (vertex in counter-clockwise order!)
     void DrawTriangleLines(Vector2 v1, Vector2 v2, Vector2 v3, Color color);                                                               // Draw triangle outline (vertex in counter-clockwise order!)
     void DrawTriangleFan(Vector2 *points, int pointCount, Color color);                                                                    // Draw a triangle fan defined by points (first vertex is the center)
@@ -1255,12 +1255,12 @@ namespace rlw
     // NOTE: These functions do not require GPU access
     Image LoadImage(const char *fileName);                                                        // Load image from file into CPU memory (RAM)
     Image LoadImageRaw(const char *fileName, int width, int height, int format, int headerSize);  // Load image from RAW file data
-    Image LoadImageSvg(const char *fileNameOrString, int width, int height);                      // Load image from SVG file data or string with specified size
+    /* SVG loader removed/varies across raylib builds; not wrapped here to avoid linkage */
     Image LoadImageAnim(const char *fileName, int *frames);                                       // Load image sequence from file (frames appended to image.data)
     Image LoadImageFromMemory(const char *fileType, const unsigned char *fileData, int dataSize); // Load image from memory buffer, fileType refers to extension: i.e. '.png'
     Image LoadImageFromTexture(Texture2D texture);                                                // Load image from GPU texture data
     Image LoadImageFromScreen(void);                                                              // Load image from screen buffer and (screenshot)
-    bool IsImageReady(Image image);                                                               // Check if an image is ready
+    bool IsImageValid(Image image);                                                               // Check if an image is valid (v5.5)
     void UnloadImage(Image image);                                                                // Unload image from CPU memory (RAM)
     bool ExportImage(Image image, const char *fileName);                                          // Export image data to file, returns true on success
     unsigned char *ExportImageToMemory(Image image, const char *fileType, int *fileSize);         // Export image to memory buffer
@@ -1338,9 +1338,9 @@ namespace rlw
     Texture2D LoadTextureFromImage(Image image);                                 // Load texture from image data
     TextureCubemap LoadTextureCubemap(Image image, int layout);                  // Load cubemap from image, multiple image cubemap layouts supported
     RenderTexture2D LoadRenderTexture(int width, int height);                    // Load texture for rendering (framebuffer)
-    bool IsTextureReady(Texture2D texture);                                      // Check if a texture is ready
+    bool IsTextureValid(Texture2D texture);                                      // Check if a texture is valid (v5.5)
     void UnloadTexture(Texture2D texture);                                       // Unload texture from GPU memory (VRAM)
-    bool IsRenderTextureReady(RenderTexture2D target);                           // Check if a render texture is ready
+    bool IsRenderTextureValid(RenderTexture2D target);                           // Check if a render texture is valid (v5.5)
     void UnloadRenderTexture(RenderTexture2D target);                            // Unload render texture from GPU memory (VRAM)
     void UpdateTexture(Texture2D texture, const void *pixels);                   // Update GPU texture with new data
     void UpdateTextureRec(Texture2D texture, Rectangle rec, const void *pixels); // Update GPU texture rectangle with new data
@@ -1381,7 +1381,7 @@ namespace rlw
     Font LoadFontEx(const char *fileName, int fontSize, int *codepoints, int codepointCount);                                                      // Load font from file with extended parameters, use NULL for codepoints and 0 for codepointCount to load the default character set
     Font LoadFontFromImage(Image image, Color key, int firstChar);                                                                                 // Load font from Image (XNA style)
     Font LoadFontFromMemory(const char *fileType, const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount); // Load font from memory buffer, fileType refers to extension: i.e. '.ttf'
-    bool IsFontReady(Font font);                                                                                                                   // Check if a font is ready
+    bool IsFontValid(Font font);                                                                                                                   // Check if a font is valid (v5.5)
     GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type);             // Load font data for further use
     Image GenImageFontAtlas(const GlyphInfo *glyphs, Rectangle **glyphRecs, int glyphCount, int fontSize, int padding, int packMethod);            // Generate image font atlas using chars info
     void UnloadFontData(GlyphInfo *glyphs, int glyphCount);                                                                                        // Unload font chars info data (RAM)
@@ -1463,7 +1463,7 @@ namespace rlw
     // Model management functions
     Model LoadModel(const char *fileName);        // Load model from files (meshes and materials)
     Model LoadModelFromMesh(Mesh mesh);           // Load model from generated mesh (default material)
-    bool IsModelReady(Model model);               // Check if a model is ready
+    bool IsModelValid(Model model);               // Check if a model is valid (v5.5)
     void UnloadModel(Model model);                // Unload model (including meshes) from memory (RAM and/or VRAM)
     BoundingBox GetModelBoundingBox(Model model); // Compute model bounding box limits (considers all meshes)
 
@@ -1503,7 +1503,7 @@ namespace rlw
     // Material loading/unloading functions
     Material *LoadMaterials(const char *fileName, int *materialCount);           // Load materials from model file
     Material LoadMaterialDefault(void);                                          // Load default material (Supports: DIFFUSE, SPECULAR, NORMAL maps)
-    bool IsMaterialReady(Material material);                                     // Check if a material is ready
+    bool IsMaterialValid(Material material);                                     // Check if a material is valid (v5.5)
     void UnloadMaterial(Material material);                                      // Unload material from GPU memory (VRAM)
     void SetMaterialTexture(Material *material, int mapType, Texture2D texture); // Set texture for a material map type (MATERIAL_MAP_DIFFUSE, MATERIAL_MAP_SPECULAR...)
     void SetModelMeshMaterial(Model *model, int meshId, int materialId);         // Set material for a mesh
@@ -1535,11 +1535,11 @@ namespace rlw
     // Wave/Sound loading/unloading functions
     Wave LoadWave(const char *fileName);                                                        // Load wave data from file
     Wave LoadWaveFromMemory(const char *fileType, const unsigned char *fileData, int dataSize); // Load wave from memory buffer, fileType refers to extension: i.e. '.wav'
-    bool IsWaveReady(Wave wave);                                                                // Checks if wave data is ready
+    bool IsWaveValid(Wave wave);                                                                // Checks if wave data is valid (v5.5)
     Sound LoadSound(const char *fileName);                                                      // Load sound from file
     Sound LoadSoundFromWave(Wave wave);                                                         // Load sound from wave data
     Sound LoadSoundAlias(Sound source);                                                         // Create a new sound that shares the same sample data as the source sound, does not own the sound data
-    bool IsSoundReady(Sound sound);                                                             // Checks if a sound is ready
+    bool IsSoundValid(Sound sound);                                                             // Checks if a sound is valid (v5.5)
     void UpdateSound(Sound sound, const void *data, int sampleCount);                           // Update sound buffer with new data
     void UnloadWave(Wave wave);                                                                 // Unload wave data
     void UnloadSound(Sound sound);                                                              // Unload sound
@@ -1565,7 +1565,7 @@ namespace rlw
     // Music management functions
     Music LoadMusicStream(const char *fileName);                                                    // Load music stream from file
     Music LoadMusicStreamFromMemory(const char *fileType, const unsigned char *data, int dataSize); // Load music stream from data
-    bool IsMusicReady(Music music);                                                                 // Checks if a music stream is ready
+    bool IsMusicValid(Music music);                                                                 // Checks if a music stream is valid (v5.5)
     void UnloadMusicStream(Music music);                                                            // Unload music stream
     void PlayMusicStream(Music music);                                                              // Start music playing
     bool IsMusicStreamPlaying(Music music);                                                         // Check if music is playing
@@ -1582,7 +1582,7 @@ namespace rlw
 
     // AudioStream management functions
     AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize, unsigned int channels); // Load audio stream (to stream raw audio pcm data)
-    bool IsAudioStreamReady(AudioStream stream);                                                          // Checks if an audio stream is ready
+    bool IsAudioStreamValid(AudioStream stream);                                                          // Checks if an audio stream is valid (v5.5)
     void UnloadAudioStream(AudioStream stream);                                                           // Unload audio stream and free memory
     void UpdateAudioStream(AudioStream stream, const void *data, int frameCount);                         // Update audio stream buffers with data
     bool IsAudioStreamProcessed(AudioStream stream);                                                      // Check if any audio stream buffers requires refill

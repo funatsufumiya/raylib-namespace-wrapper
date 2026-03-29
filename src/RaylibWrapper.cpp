@@ -1,5 +1,34 @@
 #include "RaylibWrapper/RaylibWrapper.hpp"
 #include "raylib.h"
+// Compatibility mapping for raylib v5.5 API changes
+// Maps wrapper calls (Is*Valid / GetScreenToWorldRay) to the correct global symbols
+#if defined(RAYLIB_VERSION_MAJOR) && (RAYLIB_VERSION_MAJOR > 5 || (RAYLIB_VERSION_MAJOR == 5 && RAYLIB_VERSION_MINOR >= 5))
+#define RLW_FN_IsShaderValid(x) ::IsShaderValid(x)
+#define RLW_FN_GetScreenToWorldRay(a,b) ::GetScreenToWorldRay(a,b)
+#define RLW_FN_IsImageValid(x) ::IsImageValid(x)
+#define RLW_FN_IsTextureValid(x) ::IsTextureValid(x)
+#define RLW_FN_IsRenderTextureValid(x) ::IsRenderTextureValid(x)
+#define RLW_FN_IsFontValid(x) ::IsFontValid(x)
+#define RLW_FN_IsModelValid(x) ::IsModelValid(x)
+#define RLW_FN_IsMaterialValid(x) ::IsMaterialValid(x)
+#define RLW_FN_IsWaveValid(x) ::IsWaveValid(x)
+#define RLW_FN_IsSoundValid(x) ::IsSoundValid(x)
+#define RLW_FN_IsMusicValid(x) ::IsMusicValid(x)
+#define RLW_FN_IsAudioStreamValid(x) ::IsAudioStreamValid(x)
+#else
+#define RLW_FN_IsShaderValid(x) ::IsShaderReady(x)
+#define RLW_FN_GetScreenToWorldRay(a,b) ::GetMouseRay(a,b)
+#define RLW_FN_IsImageValid(x) ::IsImageReady(x)
+#define RLW_FN_IsTextureValid(x) ::IsTextureReady(x)
+#define RLW_FN_IsRenderTextureValid(x) ::IsRenderTextureReady(x)
+#define RLW_FN_IsFontValid(x) ::IsFontReady(x)
+#define RLW_FN_IsModelValid(x) ::IsModelReady(x)
+#define RLW_FN_IsMaterialValid(x) ::IsMaterialReady(x)
+#define RLW_FN_IsWaveValid(x) ::IsWaveReady(x)
+#define RLW_FN_IsSoundValid(x) ::IsSoundReady(x)
+#define RLW_FN_IsMusicValid(x) ::IsMusicReady(x)
+#define RLW_FN_IsAudioStreamValid(x) ::IsAudioStreamReady(x)
+#endif
 
 namespace rlw
 {
@@ -391,9 +420,9 @@ namespace rlw
         return reinterpret_cast<Shader &>(temp);
     }
 
-    bool IsShaderReady(Shader shader)
+    bool IsShaderValid(Shader shader)
     {
-        return ::IsShaderReady(reinterpret_cast<::Shader &>(shader)); // Check if a shader is ready
+        return RLW_FN_IsShaderValid(reinterpret_cast<::Shader &>(shader)); // Check shader validity (v5 compatibility)
     }
 
     int GetShaderLocation(Shader shader, const char *uniformName)
@@ -432,9 +461,9 @@ namespace rlw
     }
 
     // Screen-space-related functions
-    Ray GetMouseRay(Vector2 mousePosition, Camera camera)
+    Ray GetScreenToWorldRay(Vector2 mousePosition, Camera camera)
     {
-        ::Ray temp = ::GetMouseRay(reinterpret_cast<::Vector2 &>(mousePosition), reinterpret_cast<::Camera &>(camera));
+        ::Ray temp = RLW_FN_GetScreenToWorldRay(reinterpret_cast<::Vector2 &>(mousePosition), reinterpret_cast<::Camera &>(camera));
         return reinterpret_cast<Ray &>(temp);
     }
 
@@ -765,9 +794,9 @@ namespace rlw
         return reinterpret_cast<AutomationEventList &>(temp);
     }
 
-    void UnloadAutomationEventList(AutomationEventList *list)
+    void UnloadAutomationEventList(AutomationEventList list)
     {
-        ::UnloadAutomationEventList(reinterpret_cast<::AutomationEventList *>(list)); // Unload automation events list from file
+        ::UnloadAutomationEventList(reinterpret_cast<::AutomationEventList &>(list)); // Unload automation events list from file
     }
 
     bool ExportAutomationEventList(AutomationEventList list, const char *fileName)
@@ -1207,9 +1236,9 @@ namespace rlw
         ::DrawRectangleRounded(reinterpret_cast<::Rectangle &>(rec), roundness, segments, reinterpret_cast<::Color &>(color)); // Draw rectangle with rounded edges
     }
 
-    void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, float lineThick, Color color)
+    void DrawRectangleRoundedLines(Rectangle rec, float roundness, int segments, Color color)
     {
-        ::DrawRectangleRoundedLines(reinterpret_cast<::Rectangle &>(rec), roundness, segments, lineThick, reinterpret_cast<::Color &>(color)); // Draw rectangle with rounded edges outline
+        ::DrawRectangleRoundedLines(reinterpret_cast<::Rectangle &>(rec), roundness, segments, reinterpret_cast<::Color &>(color)); // Draw rectangle with rounded edges outline
     }
 
     void DrawTriangle(Vector2 v1, Vector2 v2, Vector2 v3, Color color)
@@ -1395,11 +1424,12 @@ namespace rlw
         return reinterpret_cast<Image &>(temp);
     }
 
-    Image LoadImageSvg(const char *fileNameOrString, int width, int height)
-    {
-        ::Image temp = ::LoadImageSvg(fileNameOrString, width, height);
-        return reinterpret_cast<Image &>(temp);
-    }
+    // SVG loader wrapper removed to match raylib v5.5 public API availability
+    // Image LoadImageSvg(const char *fileNameOrString, int width, int height)
+    // {
+    //     ::Image temp = ::LoadImageSvg(fileNameOrString, width, height);
+    //     return reinterpret_cast<Image &>(temp);
+    // }
 
     Image LoadImageAnim(const char *fileName, int *frames)
     {
@@ -1425,9 +1455,9 @@ namespace rlw
         return reinterpret_cast<Image &>(temp);
     }
 
-    bool IsImageReady(Image image)
+    bool IsImageValid(Image image)
     {
-        return ::IsImageReady(reinterpret_cast<::Image &>(image)); // Check if an image is ready
+        return RLW_FN_IsImageValid(reinterpret_cast<::Image &>(image)); // Check image validity (v5 compatibility)
     }
 
     void UnloadImage(Image image)
@@ -1791,9 +1821,9 @@ namespace rlw
         return reinterpret_cast<RenderTexture2D &>(temp);
     }
 
-    bool IsTextureReady(Texture2D texture)
+    bool IsTextureValid(Texture2D texture)
     {
-        return ::IsTextureReady(reinterpret_cast<::Texture2D &>(texture)); // Check if a texture is ready
+        return RLW_FN_IsTextureValid(reinterpret_cast<::Texture2D &>(texture)); // Check texture validity (v5 compatibility)
     }
 
     void UnloadTexture(Texture2D texture)
@@ -1801,9 +1831,9 @@ namespace rlw
         ::UnloadTexture(reinterpret_cast<::Texture2D &>(texture)); // Unload texture from GPU memory (VRAM)
     }
 
-    bool IsRenderTextureReady(RenderTexture2D target)
+    bool IsRenderTextureValid(RenderTexture2D target)
     {
-        return ::IsRenderTextureReady(reinterpret_cast<::RenderTexture2D &>(target)); // Check if a render texture is ready
+        return RLW_FN_IsRenderTextureValid(reinterpret_cast<::RenderTexture2D &>(target)); // Check render texture validity (v5 compatibility)
     }
 
     void UnloadRenderTexture(RenderTexture2D target)
@@ -1985,9 +2015,9 @@ namespace rlw
         return reinterpret_cast<Font &>(temp);
     }
 
-    bool IsFontReady(Font font)
+    bool IsFontValid(Font font)
     {
-        return ::IsFontReady(reinterpret_cast<::Font &>(font)); // Check if a font is ready
+        return RLW_FN_IsFontValid(reinterpret_cast<::Font &>(font)); // Check font validity (v5 compatibility)
     }
 
     GlyphInfo *LoadFontData(const unsigned char *fileData, int dataSize, int fontSize, int *codepoints, int codepointCount, int type)
@@ -2323,9 +2353,9 @@ namespace rlw
         return reinterpret_cast<Model &>(temp);
     }
 
-    bool IsModelReady(Model model)
+    bool IsModelValid(Model model)
     {
-        return ::IsModelReady(reinterpret_cast<::Model &>(model)); // Check if a model is ready
+        return RLW_FN_IsModelValid(reinterpret_cast<::Model &>(model)); // Check model validity (v5 compatibility)
     }
 
     void UnloadModel(Model model)
@@ -2498,9 +2528,9 @@ namespace rlw
         return reinterpret_cast<Material &>(temp);
     }
 
-    bool IsMaterialReady(Material material)
+    bool IsMaterialValid(Material material)
     {
-        return ::IsMaterialReady(reinterpret_cast<::Material &>(material)); // Check if a material is ready
+        return RLW_FN_IsMaterialValid(reinterpret_cast<::Material &>(material)); // Check material validity (v5 compatibility)
     }
 
     void UnloadMaterial(Material material)
@@ -2628,9 +2658,9 @@ namespace rlw
         return reinterpret_cast<Wave &>(temp);
     }
 
-    bool IsWaveReady(Wave wave)
+    bool IsWaveValid(Wave wave)
     {
-        return ::IsWaveReady(reinterpret_cast<::Wave &>(wave)); // Checks if wave data is ready
+        return RLW_FN_IsWaveValid(reinterpret_cast<::Wave &>(wave)); // Checks wave validity (v5 compatibility)
     }
 
     Sound LoadSound(const char *fileName)
@@ -2651,9 +2681,9 @@ namespace rlw
         return reinterpret_cast<Sound &>(temp);
     }
 
-    bool IsSoundReady(Sound sound)
+    bool IsSoundValid(Sound sound)
     {
-        return ::IsSoundReady(reinterpret_cast<::Sound &>(sound)); // Checks if a sound is ready
+        return RLW_FN_IsSoundValid(reinterpret_cast<::Sound &>(sound)); // Checks sound validity (v5 compatibility)
     }
 
     void UpdateSound(Sound sound, const void *data, int sampleCount)
@@ -2764,9 +2794,9 @@ namespace rlw
         return reinterpret_cast<Music &>(temp);
     }
 
-    bool IsMusicReady(Music music)
+    bool IsMusicValid(Music music)
     {
-        return ::IsMusicReady(reinterpret_cast<::Music &>(music)); // Checks if a music stream is ready
+        return RLW_FN_IsMusicValid(reinterpret_cast<::Music &>(music)); // Checks music validity (v5 compatibility)
     }
 
     void UnloadMusicStream(Music music)
@@ -2840,9 +2870,9 @@ namespace rlw
         return reinterpret_cast<AudioStream &>(temp);
     }
 
-    bool IsAudioStreamReady(AudioStream stream)
+    bool IsAudioStreamValid(AudioStream stream)
     {
-        return ::IsAudioStreamReady(reinterpret_cast<::AudioStream &>(stream)); // Checks if an audio stream is ready
+        return RLW_FN_IsAudioStreamValid(reinterpret_cast<::AudioStream &>(stream)); // Checks audio stream validity (v5 compatibility)
     }
 
     void UnloadAudioStream(AudioStream stream)
