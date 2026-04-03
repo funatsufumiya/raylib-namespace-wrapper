@@ -46,7 +46,7 @@ int main() {
 ### or
 
 ```cpp
-#include "RaylibWrapper/c-api.h"
+#include "RaylibWrapper/c_api.h"
 
 int main() {
     rlw_initWindow(800, 600, "game title");
