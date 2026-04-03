@@ -43,6 +43,22 @@ int main() {
 }
 ```
 
+### or
+
+```cpp
+#include "RaylibWrapper/c-api.h"
+
+int main() {
+    rlw_initWindow(800, 600, "game title");
+    while (!rlw_WindowShouldClose()) {
+        rlw_BeginDrawing();
+        rlw_EndDrawing();
+    }
+    rlw_closeWindow();
+    return 0;
+}
+```
+
 ## Credits
 
 This project builds upon the excellent work of the raylib team:
